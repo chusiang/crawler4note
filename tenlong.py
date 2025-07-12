@@ -8,13 +8,91 @@ import requests
 import sys
 import urllib3
 import pangu
+import re
 
 # disable ssl warn message.
 urllib3.disable_warnings()
 logging.captureWarnings(True)
 
 
+HTML_TEMPLATE = """\
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title> {{ title }} </title>
+</head>
+<body>
+  <p>
+    History:
+    <ul>
+      <li> TBD. </li>
+    </ul>
+  </p>
+  <p>
+    Series:
+    <ul>
+      <li> TBD. </li>
+    </ul>
+  </p>
+  <p>
+    Buy:
+    <ul>
+      <li> <a href="{{ url }}" target="_blank">天瓏書局</a> </li>
+    </ul>
+  </p>
+  <hr>
+  {{ info }}
+
+  <h2>商品描述</h2>
+  {{ desc }}
+
+  <h2>作者簡介</h2>
+  {{ author }}
+
+  <h2>目錄大綱</h2>
+  {{ outline }}
+
+  <h2>Memo</h2>
+
+  <h3>我想讀這本書的原因是什麼?</h3>
+  <ol>
+    <li> TBD. </li>
+  </ol>
+
+  <h3>看完書封介紹和目錄大綱後，我覺得我可以從那邊得到什麼?</h3>
+  <ol>
+    <li> TBD. </li>
+  </ol>
+
+  <h3>在買這本新書前，我曾讀過相關的主題的書籍嗎? 當時得到了什麼新知?</h3>
+  <ol>
+    <li> TBD. </li>
+  </ol>
+
+  <footer style="text-align: center;">
+    Parser by
+      <a href="https://github.com/chusiang/crawler4note" target="_blank">
+        chusiang/crawler4note
+      </a>
+    <hr>
+  </footer>
+</body>
+</html>
+"""
+
+
 def get_data():
+
+    """
+    Data Retrieval
+    --------------
+
+    1. Get URL or Books ID from cli.
+    2. Send requests and return BeautifulSoup.
+    """
+
     try:
         arg = sys.argv[1]
 
@@ -78,62 +156,6 @@ def parser_book_outline(data):
 
 def main():
     try:
-        # Template with Jinja2
-        template = Template('''\
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width" />
-  <title> {{ title }} </title>
-</head>
-<body>
-  <p>
-    Buy:
-    <ul>
-      <li> <a href="{{ url }}" target="_blank">天瓏書局</a> </li>
-    </ul>
-  </p>
-  <hr>
-  {{ info }}
-
-  <h2>商品描述</h2>
-  {{ desc }}
-
-  <h2>作者簡介</h2>
-  {{ author }}
-
-  <h2>目錄大綱</h2>
-  {{ outline }}
-
-  <h2>Memo</h2>
-
-  <h3>我想讀這本書的原因是什麼?</h3>
-  <ol>
-    <li> &lt;FIXED_ME&gt; </li>
-  </ol>
-
-  <h3>看完書封介紹和目錄大綱後，我覺得我可以從那邊得到什麼?</h3>
-  <ol>
-    <li> &lt;FIXED_ME&gt; </li>
-  </ol>
-
-  <h3>在買這本新書前，我曾讀過相關的主題的書籍嗎? 當時得到了什麼新知?</h3>
-  <ol>
-    <li> &lt;FIXED_ME&gt; </li>
-  </ol>
-
-  <footer style="text-align: center;">
-    Parser by
-      <a href="https://github.com/chusiang/crawler-book-info" target="_blank">
-        chusiang/crawler-book-info
-      </a>
-    <hr>
-  </footer>
-</body>
-</html>
-''')
-
         # Get data.
         data = get_data()
 
@@ -145,7 +167,8 @@ def main():
         book_author = parser_book_author(data[0])
         book_outline = parser_book_outline(data[0])
 
-        # Mapping the parser data to template.
+        # Rendering with Jinja2 template.
+        template = Template(HTML_TEMPLATE)
         result = template.render(
             title=book_title,
             url=book_url,
