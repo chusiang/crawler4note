@@ -1,5 +1,5 @@
-name: Lint check
-run-name: Lint check
+name: Check
+run-name: Check
 
 on:
   push:
