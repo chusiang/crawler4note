@@ -1,6 +1,6 @@
 FROM python:3.7-alpine
 
-MAINTAINER Chu-Siang Lai <chusiang@drx.tw>
+LABEL org.opencontainers.image.authors="chusiang@drx.tw"
 
 COPY *.py LICENSE README.md requirements.txt /srv/
 
