@@ -98,16 +98,23 @@ def get_data():
 
         if arg.isdigit():
             # send get request and get reposoe.
-            book_url = str('https://www.tenlong.com.tw/products/' + arg)
+            book_url = f'https://www.tenlong.com.tw/products/{arg}'
         else:
-            book_url = str(arg)
+            book_url = arg
 
-        res = requests.get(book_url)
-        soup = BeautifulSoup(res.text)
+        res = requests.get(book_url, verify=False)
+        res.raise_for_status()  # 檢查 HTTP 請求是否成功
+        soup = BeautifulSoup(res.text, 'html.parser')
+
         return soup, book_url
 
+    except requests.exceptions.RequestException as e:
+        print(f"無法連線到網頁或請求失敗: {e}")
+        sys.exit(1)
+
     except Exception as e:
-        print(e)
+        print(f"發生錯誤: {e}")
+        sys.exit(1)
 
 
 def parser_book_title(data):
