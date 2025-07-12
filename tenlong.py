@@ -117,73 +117,75 @@ def get_data():
         sys.exit(1)
 
 
-def parser_book_title(data):
-    title = data.title
-    title = str(title).replace('<title>天瓏網路書店-', '')
-    title = title.replace('</title>', '')
-    return title
+def parse_book_data(soup):
 
+    """
+    提取所有書籍資訊並回傳一個字典，並使用正則表達式進行清理。
+    """
 
-def parser_book_info(data):
-    parser_item_info = data.find_all('div', class_='item-info')
-    info = str(parser_item_info[0])
-    info = info.replace('<i class="fa fa-eye fa-before"></i>', '')
-    info = info.replace('<a class="item-preview btn btn-plain" href="#">', '')
-    info = info.replace('預覽內頁</a>', '')
-    return info
+    # 1. 標題
+    # 提取 <title> 標籤的文字，並移除 "天瓏網路書店-"
+    title_elem = soup.title
+    title = title_elem.get_text(strip=True) if title_elem else 'Not Found'
+    # 使用 regex 移除 "天瓏網路書店-"
+    title = re.sub(r'天瓏網路書店-', '', title).strip()
 
+    # 2. 書籍資訊區塊 (item-info)
+    # 提取 class="item-info" 的 div 內容
+    info_elem = soup.find('div', class_='item-info')
+    info = str(info_elem) if info_elem else 'Not Found'
 
-def parser_book_desc(data):
-    parser_item_desc = data.find_all('div', class_='item-desc')
-    book_desc = str(parser_item_desc[0])
-    return book_desc
+    # 使用 regex 移除預覽內頁按鈕的整個 <a> 標籤，包括其內容
+    # 模式解釋:
+    # <a\s+class="item-preview\s+btn\s+btn-plain"[^>]*?>: 匹配開頭的 <a 標籤及所有其屬性
+    # .*?: 非貪婪匹配任何內容 (包括 <i> 標籤和文字)
+    # 預覽內頁</a>: 匹配 "預覽內頁" 文字和結束的 </a> 標籤
+    info = re.sub(
+        r'<a\s+class="item-preview\s+btn\s+btn-plain"[^>]*?>.*?預覽內頁</a>',
+        '', info, flags=re.DOTALL)
 
+    # 使用 regex 移除 <i class="fa fa-eye fa-before"></i> 標籤
+    # 模式解釋:
+    # <i\s+class="fa\s+fa-eye\s+fa-before"[^>]*?>: 匹配開頭的 <i 標籤及所有其屬性
+    # .*?: 非貪婪匹配任何內容 (如果 <i> 標籤內有內容的話)
+    # </i>: 匹配結束的 </i> 標籤
+    info = re.sub(
+        r'<i\s+class="fa\s+fa-eye\s+fa-before"[^>]*?>.*?</i>',
+        '', info, flags=re.DOTALL)
 
-def parser_book_author(data):
-    parser_item_desc = data.find_all('div', class_='item-desc')
-    try:
-        author = parser_item_desc[1]
-    except IndexError:
-        print("'item-desc[1]' is not found.")
-        author = "Not found."
-    finally:
-        return author
+    # 3. 商品描述、作者簡介、目錄大綱
+    # 這些內容都在 class="item-desc" 的 div 中，按順序排列
+    item_desc_elements = soup.find_all('div', class_='item-desc')
 
+    # 商品描述 (第一個 item-desc)
+    desc = str(item_desc_elements[0]) if len(item_desc_elements) > 0 else 'Not Found'
 
-def parser_book_outline(data):
-    parser_item_desc = data.find_all('div', class_='item-desc')
-    try:
-        outline = parser_item_desc[2]
-    except IndexError:
-        print("'item-desc[2]' is not found.")
-        outline = "Not found."
-    finally:
-        return outline
+    # 作者簡介 (第二個 item-desc)
+    author = str(item_desc_elements[1]) if len(item_desc_elements) > 1 else 'Not Found.'
+
+    # 目錄大綱 (第三個 item-desc)
+    outline = str(item_desc_elements[2]) if len(item_desc_elements) > 2 else 'Not Found.'
+
+    return {
+        "title": title,
+        "info": info,
+        "desc": desc,
+        "author": author,
+        "outline": outline
+    }
 
 
 def main():
     try:
         # Get data.
-        data = get_data()
+        soup, book_url = get_data()
 
         # Parser.
-        book_title = parser_book_title(data[0])
-        book_url = data[1]
-        book_info = parser_book_info(data[0])
-        book_desc = parser_book_desc(data[0])
-        book_author = parser_book_author(data[0])
-        book_outline = parser_book_outline(data[0])
+        book_data = parse_book_data(soup)
 
         # Rendering with Jinja2 template.
         template = Template(HTML_TEMPLATE)
-        result = template.render(
-            title=book_title,
-            url=book_url,
-            info=book_info,
-            desc=book_desc,
-            author=book_author,
-            outline=book_outline
-        )
+        result = template.render(**book_data, url=book_url)
 
         # Save to HTML file, and fix layout by pangu.
         with open('index.html', 'w', encoding='utf-8') as f:
