@@ -8,154 +8,14 @@ import requests
 import sys
 import urllib3
 import pangu
+import re
 
-# disable ssl warn message.
+# disable ssl warn message and warning logging
 urllib3.disable_warnings()
 logging.captureWarnings(True)
 
 
-def get_data():
-    try:
-        arg = sys.argv[1]
-
-        if arg.isdigit():
-            book_url = str('https://www.books.com.tw/products/' + arg)
-        else:
-            book_url = str(arg)
-
-        # send get request and get reposoe.
-        res = requests.get(book_url)
-        soup = BeautifulSoup(res.text)
-        return soup, book_url
-
-    except Exception as e:
-        print(e)
-
-
-def parser_book_title(data):
-    title = data.title
-    title = str(title).replace('<title>博客來-', '')
-    title = title.replace('</title>', '')
-    return title
-
-
-def parser_book_full_title(data):
-    parser_full_title = data.find_all('h1')
-    full_title = str(parser_full_title[0])
-    full_title = full_title.replace('<div class="mod type02_p002', '')
-    full_title = full_title.replace(' clearfix">', '')
-    full_title = full_title.replace('</div>', '')
-    return full_title
-
-
-def parser_book_cover(data):
-    cover_css_class = 'cover M201106_0_getTakelook_P00a400020052_image_wrap'
-    parser_cover = data.find_all('img', class_=cover_css_class)
-    cover = str(parser_cover[0])
-    cover = cover.split('src')
-    cover = cover[1]
-    cover = cover.split('"')
-    cover = cover[1].replace("amp;", "")
-    return cover
-
-
-def parser_book_info1(data):
-    parser_info = data.find_all('div', class_='type02_p003 clearfix')
-    info = str(parser_info[0])
-    info = info.replace('<div class="type02_p003 clearfix">', '')
-    info = info.replace('<span class="arrow"></span>', '')
-
-    info = info.replace('<h4>已追蹤作者：<strong class="edit">', '')
-    info = info.replace('[ <a href="" id="editTrace">修改</a>', '')
-    info = info.replace(' ]</strong></h4>', '')
-    info = info.replace('<ul id="list_traced"></ul>', '')
-    info = info.replace('<ul class="list_trace" id="list_trace"></ul>', '')
-
-    info = info.replace('<a class="type02_btn09"', '')
-    info = info.replace(' href="javascript:saveTrace();">確定</a>', '')
-    info = info.replace('<a class="type02_btn09"', '')
-    info = info.replace(' href="javascript:cancelTrace();">取消</a>', '')
-
-    info = info.replace('     <a class="type02_btn02" href="" ', '')
-    info = info.replace('id="trace_btn1"><span><span class="trace_txt">', '')
-    info = info.replace(' </span></span></a>', '')
-
-    info = info.replace('<a href="//www.books.com.tw/activity/2015/06/', '')
-    info = info.replace('trace/index.html#author" target="_blank" ', '')
-    info = info.replace('title="新功能介紹"><cite class="help">', '')
-    info = info.replace('新功能介紹</cite></a>', '')
-
-    info = info.replace('     <a class="type02_btn02" href="" ', '')
-    info = info.replace('id="trace_btn2"><span><span class="trace_txt">', '')
-    info = info.replace(' </span></span></a>', '')
-
-    info = info.replace('<a href="//www.books.com.tw/activity/2015/06/', '')
-    info = info.replace('trace/index.html#publisher" target="_blank" ', '')
-    info = info.replace('title="新功能介紹"><cite class="help">', '')
-    info = info.replace('新功能介紹</cite></a>', '')
-
-    info = info.replace('</ul></div>', '')
-    return info
-
-
-def parser_book_price(data):
-    parser_price = data.find_all('ul', class_='price')
-    price = str(parser_price[0])
-    price = price.replace('<ul class="price">', '')
-    price = price.replace('</ul>', '')
-    return price
-
-
-def parser_book_info2(data):
-    parser_info = data.find_all('div', class_='mod_b type02_m058 clearfix')
-    info = str(parser_info[0])
-    info = info.replace('<div class="mod_b type02_m058 clearfix">', '')
-    info = info.replace('<a name="P00a400020016"> </a>', '')
-    info = info.replace('<h3>詳細資料</h3>', '')
-    info = info.replace('<div class="bd">', '')
-    info = info.replace('<ul>', '')
-    info = info.replace('                          </li></ul>', '</li>')
-    info = info.replace('<ul class="sort">', '')
-    info = info.replace('</div></div>', '')
-    return info
-
-
-def parser_book_desc(data):
-    parser_bd = data.find_all('div', class_='bd')
-    desc = str(parser_bd[0])
-    return desc
-
-
-def parser_book_author(data):
-    parser_bd = data.find_all('div', class_='bd')
-    try:
-        author = str(parser_bd[1])
-        author = author.replace('作者簡介<br/>', '')
-        author = author.replace('<strong>\n<br/>', '<strong>')
-        # author = book_author.replace(r'\r\n','')
-    except IndexError:
-        print("'Author' is not found.")
-        author = "Not found."
-    finally:
-        return author
-
-
-def parser_book_outline(data):
-    parser_bd = data.find_all('div', class_='bd')
-    try:
-        outline = str(parser_bd[2])
-    except IndexError:
-        print("'Outline' is not found.")
-        outline = "Not found."
-    finally:
-        return outline
-
-
-def main():
-    try:
-
-        # Template with Jinja2
-        template = Template('''\
+HTML_TEMPLATE = """\
 <!DOCTYPE html>
 <html>
 <head>
@@ -164,6 +24,18 @@ def main():
   <title> {{ title }} </title>
 </head>
 <body>
+  <p>
+    History:
+    <ul>
+      <li> TBD. </li>
+    </ul>
+  </p>
+  <p>
+    Series:
+    <ul>
+      <li> TBD. </li>
+    </ul>
+  </p>
   <p>
     Buy:
     <ul>
@@ -193,66 +65,184 @@ def main():
 
   <h3>我想讀這本書的原因是什麼?</h3>
   <ol>
-    <li> &lt;FIXED_ME&gt; </li>
+    <li> TBD. </li>
   </ol>
 
   <h3>看完書封介紹和目錄大綱後，我覺得我可以從那邊得到什麼?</h3>
   <ol>
-    <li> &lt;FIXED_ME&gt; </li>
+    <li> TBD. </li>
   </ol>
 
   <h3>在買這本新書前，我曾讀過相關的主題的書籍嗎? 當時得到了什麼新知?</h3>
   <ol>
-    <li> &lt;FIXED_ME&gt; </li>
+    <li> TBD. </li>
   </ol>
 
   <footer style="text-align: center;">
     Parser by
-      <a href="https://github.com/chusiang/crawler-book-info" target="_blank">
-        chusiang/crawler-book-info
+      <a href="https://github.com/chusiang/crawler4note" target="_blank">
+        chusiang/crawler4note
       </a>
     <hr>
   </footer>
 </body>
 </html>
-''')
+"""
 
-        # Get data.
-        data = get_data()
 
-        # Parser.
-        book_title = parser_book_title(data[0])
-        book_url = data[1]
-        book_full_title = parser_book_full_title(data[0])
-        book_cover = parser_book_cover(data[0])
-        book_info1 = parser_book_info1(data[0])
-        book_price = parser_book_price(data[0])
-        book_info2 = parser_book_info2(data[0])
-        book_desc = parser_book_desc(data[0])
-        book_author = parser_book_author(data[0])
-        book_outline = parser_book_outline(data[0])
+def get_data():
 
-        # Mapping the parser data to template.
-        result = template.render(
-            title=book_title,
-            url=book_url,
-            full_title=book_full_title,
-            cover=book_cover,
-            info1=book_info1,
-            price=book_price,
-            info2=book_info2,
-            desc=book_desc,
-            author=book_author,
-            outline=book_outline
-        )
+    """
+    Data Retrieval
+    --------------
 
-        # Write to HTML file.
-        f = open('index.html', 'w')
-        f.write(pangu.spacing_text(result))
-        f.close()
+    1. Get URL or Books ID from cli.
+    2. Send requests and return BeautifulSoup.
+    """
+
+    try:
+        if len(sys.argv) < 2:
+            print("請輸入博客來書籍 ID 或完整的 URL 作為命令列參數。")
+            sys.exit(1)
+        arg = sys.argv[1]
+        if arg.isdigit():
+            book_url = f'https://www.books.com.tw/products/{arg}'
+        else:
+            book_url = arg
+
+        # Send GET request and get response.
+        res = requests.get(book_url, verify=False)
+        res.raise_for_status()  # 檢查 HTTP 請求是否成功
+        soup = BeautifulSoup(res.text, 'html.parser')
+
+        return soup, book_url
+
+    except requests.exceptions.RequestException as e:
+        print(f"無法連線到網頁或請求失敗: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"發生錯誤: {e}")
+        sys.exit(1)
+
+
+def regex_cleaned(html_str):
+
+    """
+    Data Parsing
+    ------------
+
+    1. Clean HTML element and attribute, like "追蹤按鈕".
+    """
+
+    # 移除 `<h4>` 及其相關的追蹤和修改按鈕
+    cleaned = re.sub(r'<h4[^>]*>已追蹤作者：.*?</h4>', '', html_str, flags=re.DOTALL)
+
+    # 移除 `<a name="*">`
+    cleaned = re.sub(r'<a[^>]*?\s+name="[^"]*"[^>]*?>./*?</a>', '', cleaned, flags=re.DOTALL)
+
+    # 移除 `<ul class="sort">``
+    cleaned = re.sub(r'<ul\s+class="sort">', '', cleaned, flags=re.DOTALL)
+
+    # 移除 `<div class="bd">``
+    cleaned = re.sub(r'<div\s+class="bd">', '', cleaned, flags=re.DOTALL)
+
+    # 移除 id="list_trace" 和 id="list_traced" 的 ul 標籤
+    cleaned = re.sub(r'<ul\s+(?:id="list_trace"|id="list_traced")[^>]*>.*?</ul>', '', cleaned, flags=re.DOTALL)
+
+    # 移除 `type02_btn02` 的按鈕
+    cleaned = re.sub(r'<a[^>]*class="type02_btn02"[^>]*>.*?</a>', '', cleaned, flags=re.DOTALL)
+
+    # 移除 <span class="arrow"></span>
+    cleaned = cleaned.replace('<span class="arrow"></span>', '')
+
+    # 移除幫助連結 <cite class="help">...</cite>
+    cleaned = re.sub(r'<a[^>]*title="新功能介紹"[^>]*>.*?</a>', '', cleaned, flags=re.DOTALL)
+
+    return cleaned.strip()
+
+
+def parse_book_data(soup):
+
+    # 標題
+    title = soup.title.get_text(strip=True).replace('博客來-', '')
+
+    # 書籍完整標題
+    full_title_elem = soup.select_one('h1')
+    full_title = str(full_title_elem) if full_title_elem else 'Not Found'
+
+    # 封面圖片 URL
+    #
+    # 尋找 class_='cover' 的 img 標籤，並取得 'src' 屬性
+    cover_img = soup.find('img', class_='cover')
+    #
+    # 確保 img 標籤存在並取得 src 屬性，同時移除 'amp;'
+    cover = cover_img.get('src', '').replace('amp;', '') if cover_img else 'Not Found'
+
+    # 書籍資訊區塊 1 (包含作者資訊、追蹤按鈕等)
+    info1_elem = soup.find('div', class_='type02_p003 clearfix')
+    info1 = str(info1_elem) if info1_elem else ''
+    info1 = info1.removesuffix('</ul></div>')
+    info1 = regex_cleaned(info1)
+
+    # 書籍價格
+    price_elem = soup.find('ul', class_='price')
+    price = price_elem.decode_contents() if price_elem else 'Not Found'
+
+    # 書籍資訊區塊 2 (通常是詳細資料)
+    info2_elem = soup.find('div', class_='mod_b type02_m058 clearfix')
+    if info2_elem:
+        info2 = info2_elem.decode_contents().replace('<h3>詳細資料</h3>', '').strip()
+        info2 = regex_cleaned(info2)
+        info2 = info2.replace("<ul>", '').replace("</ul>", '')
+    else:
+        info2 = 'Not Found'
+
+    # 商品描述 (第一個 class_='bd' 的 div)
+    desc_elem = soup.find_all('div', class_='bd')
+    desc = str(desc_elem[0]) if desc_elem else 'Not Found'
+
+    # 作者簡介 (第二個 class_='bd' 的 div)
+    author = "Not Found."
+    if len(desc_elem) > 1:
+        # 獲取第二個 bd 區塊並移除 '作者簡介<br/>'
+        author = str(desc_elem[1]).replace('作者簡介<br/>', '').replace('<strong>\n<br/>', '<strong>')
+
+    # 目錄大綱 (第三個 class_='bd' 的 div)
+    outline = "Not Found."
+    if len(desc_elem) > 2:
+        outline = str(desc_elem[2])
+
+    return {
+        "title": title,
+        "full_title": full_title,
+        "cover": cover,
+        "info1": info1,
+        "price": price,
+        "info2": info2,
+        "desc": desc,
+        "author": author,
+        "outline": outline
+    }
+
+
+def main():
+    try:
+        soup, book_url = get_data()
+
+        book_data = parse_book_data(soup)
+
+        # Rendering with Jinja2 template.
+        template = Template(HTML_TEMPLATE)
+        result = template.render(**book_data, url=book_url)
+
+        # Save to HTML file, and fix layout by pangu.
+        with open('index.html', 'w', encoding='utf-8') as f:
+            f.write(pangu.spacing_text(result))
+
+        print("Generated index.html !")
 
     except Exception as e:
-        print(e)
+        print(f"Runtime error: {e}")
 
 
 if __name__ == "__main__":
