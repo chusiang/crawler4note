@@ -158,13 +158,22 @@ def parse_book_data(soup):
     item_desc_elements = soup.find_all('div', class_='item-desc')
 
     # 商品描述 (第一個 item-desc)
-    desc = str(item_desc_elements[0]) if len(item_desc_elements) > 0 else 'Not Found'
+    if len(item_desc_elements) > 0:
+        desc = str(item_desc_elements[0])
+    else:
+        desc = 'Not Found'
 
     # 作者簡介 (第二個 item-desc)
-    author = str(item_desc_elements[1]) if len(item_desc_elements) > 1 else 'Not Found.'
+    if len(item_desc_elements) > 1:
+        author = str(item_desc_elements[1])
+    else:
+        author = 'Not Found.'
 
     # 目錄大綱 (第三個 item-desc)
-    outline = str(item_desc_elements[2]) if len(item_desc_elements) > 2 else 'Not Found.'
+    if len(item_desc_elements) > 2:
+        outline = str(item_desc_elements[2])
+    else:
+        outline = 'Not Found.'
 
     return {
         "title": title,
