@@ -138,7 +138,9 @@ def regex_cleaned(html_str):
     cleaned = re.sub(r'<h4[^>]*>已追蹤作者：.*?</h4>', '', html_str, flags=re.DOTALL)
 
     # 移除 `<a name="*">`
-    cleaned = re.sub(r'<a[^>]*?\s+name="[^"]*"[^>]*?>./*?</a>', '', cleaned, flags=re.DOTALL)
+    cleaned = re.sub(
+        r'<a[^>]*?\s+name="[^"]*"[^>]*?>./*?</a>',
+        '', cleaned, flags=re.DOTALL)
 
     # 移除 `<ul class="sort">``
     cleaned = re.sub(r'<ul\s+class="sort">', '', cleaned, flags=re.DOTALL)
@@ -147,16 +149,22 @@ def regex_cleaned(html_str):
     cleaned = re.sub(r'<div\s+class="bd">', '', cleaned, flags=re.DOTALL)
 
     # 移除 id="list_trace" 和 id="list_traced" 的 ul 標籤
-    cleaned = re.sub(r'<ul\s+(?:id="list_trace"|id="list_traced")[^>]*>.*?</ul>', '', cleaned, flags=re.DOTALL)
+    cleaned = re.sub(
+        r'<ul\s+(?:id="list_trace"|id="list_traced")[^>]*>.*?</ul>',
+        '', cleaned, flags=re.DOTALL)
 
     # 移除 `type02_btn02` 的按鈕
-    cleaned = re.sub(r'<a[^>]*class="type02_btn02"[^>]*>.*?</a>', '', cleaned, flags=re.DOTALL)
+    cleaned = re.sub(
+        r'<a[^>]*class="type02_btn02"[^>]*>.*?</a>',
+        '', cleaned, flags=re.DOTALL)
 
     # 移除 <span class="arrow"></span>
     cleaned = cleaned.replace('<span class="arrow"></span>', '')
 
     # 移除幫助連結 <cite class="help">...</cite>
-    cleaned = re.sub(r'<a[^>]*title="新功能介紹"[^>]*>.*?</a>', '', cleaned, flags=re.DOTALL)
+    cleaned = re.sub(
+        r'<a[^>]*title="新功能介紹"[^>]*>.*?</a>',
+        '', cleaned, flags=re.DOTALL)
 
     return cleaned.strip()
 
@@ -176,7 +184,10 @@ def parse_book_data(soup):
     cover_img = soup.find('img', class_='cover')
     #
     # 確保 img 標籤存在並取得 src 屬性，同時移除 'amp;'
-    cover = cover_img.get('src', '').replace('amp;', '') if cover_img else 'Not Found'
+    if cover_img:
+        cover = cover_img.get('src', '').replace('amp;', '')
+    else:
+        cover = 'Not Found'
 
     # 書籍資訊區塊 1 (包含作者資訊、追蹤按鈕等)
     info1_elem = soup.find('div', class_='type02_p003 clearfix')
@@ -191,7 +202,8 @@ def parse_book_data(soup):
     # 書籍資訊區塊 2 (通常是詳細資料)
     info2_elem = soup.find('div', class_='mod_b type02_m058 clearfix')
     if info2_elem:
-        info2 = info2_elem.decode_contents().replace('<h3>詳細資料</h3>', '').strip()
+        info2 = info2_elem.decode_contents().replace(
+            '<h3>詳細資料</h3>', '').strip()
         info2 = regex_cleaned(info2)
         info2 = info2.replace("<ul>", '').replace("</ul>", '')
     else:
@@ -205,7 +217,9 @@ def parse_book_data(soup):
     author = "Not Found."
     if len(desc_elem) > 1:
         # 獲取第二個 bd 區塊並移除 '作者簡介<br/>'
-        author = str(desc_elem[1]).replace('作者簡介<br/>', '').replace('<strong>\n<br/>', '<strong>')
+        author = str(desc_elem[1]).replace(
+            '作者簡介<br/>', '').replace(
+            '<strong>\n<br/>', '<strong>')
 
     # 目錄大綱 (第三個 class_='bd' 的 div)
     outline = "Not Found."
