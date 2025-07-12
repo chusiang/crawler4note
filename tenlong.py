@@ -185,10 +185,11 @@ def main():
             outline=book_outline
         )
 
-        # Write to HTML file.
-        f = open('index.html', 'w')
-        f.write(pangu.spacing_text(result))
-        f.close()
+        # Save to HTML file, and fix layout by pangu.
+        with open('index.html', 'w', encoding='utf-8') as f:
+            f.write(pangu.spacing_text(result))
+
+        print("Generated index.html !")
 
     except Exception as e:
         print(e)
