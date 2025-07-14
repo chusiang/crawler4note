@@ -7,10 +7,11 @@ main: run_containers
 init: create_venv install_packages run_containers
 
 create_venv:
-	virtualenv -p python3 .venv
+	pyenv virtualenv 3.13.2 py3
+	pyenv local py3
 
 install_packages:
-	.venv/bin/pip3 install -r requirements.txt
+	pip3 install -r requirements.txt
 
 run_containers:
 	docker-compose up -d
@@ -32,10 +33,10 @@ flake8_check_docker:
 # https://stackoverflow.com/a/6273809/686105
 
 telong:
-	. .venv/bin/activate && python3 tenlong.py	$(filter-out $@,$(MAKECMDGOALS))
+	python3 tenlong.py	$(filter-out $@,$(MAKECMDGOALS))
 
 books:
-	. .venv/bin/activate && python3 books.py		$(filter-out $@,$(MAKECMDGOALS))
+	python3 books.py		$(filter-out $@,$(MAKECMDGOALS))
 
 %:
 	@:
@@ -60,11 +61,8 @@ endif
 
 # ---- Clean -------------------------------------------------------------------
 
-remove_virtualenv:
-	-rm -rf .venv
-
 remove_containers:
 	docker-compose down -v
 
-clean: remove_virtualenv remove_containers
+clean: remove_containers
 	-rm -f *.html
