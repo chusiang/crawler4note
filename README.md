@@ -10,21 +10,21 @@ A sample crawler for quick parse some information (ex. book) for put to my Evern
 1. create virtualenv of `py3`.
 
    ```console
-   [ chusiang@xenial ~/vcs/crawler4note ]
-   $ pyenv virtualenv 3.9.6 py3
+   [ chusiang@noble ~/vcs/crawler4note ]
+   $ pyenv virtualenv 3.13.2 py3
    ```
 
 1. Use `py3` virtualenv under this directory.
 
    ```console
-   [ chusiang@xenial ~/vcs/crawler4note ]
+   [ chusiang@noble ~/vcs/crawler4note ]
    $ pyenv local py3
    ```
 
 1. Install packages with pip.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ pip3 install -r requirements.txt
    ```
 
@@ -38,7 +38,7 @@ A sample crawler for quick parse some information (ex. book) for put to my Evern
 1. Run crawler with **ISBN-13**.
 
    ```console
-   (.py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (.py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ python3 tenlong.py 9781491915325
    ```
 
@@ -47,14 +47,14 @@ A sample crawler for quick parse some information (ex. book) for put to my Evern
 1. Run crawler with **url**.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ python3 books.py https://www.books.com.tw/products/0010810939
    ```
 
 1. Run crawler with **product number**.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ python3 books.py 0010810939
    ```
 
@@ -65,7 +65,7 @@ A sample crawler for quick parse some information (ex. book) for put to my Evern
 1. Open html via Firefox on GNU/Linux.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ firefox index.html
    ```
 
@@ -81,14 +81,14 @@ The **Evernote Web Clipper** is not support local files, so we can clip it with 
 1. Run Nginx container.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ docker run --name nginx -v "$(pwd)":/usr/share/nginx/html/ -p 80:80 -d nginx
    ```
 
 1. Open html via Firefox on GNU/Linux.
 
    ```console
-   (py3) [ chusiang@xenial ~/vcs/crawler4note ]
+   (py3) [ chusiang@noble ~/vcs/crawler4note ]
    $ firefox http://localhost
    ```
 
