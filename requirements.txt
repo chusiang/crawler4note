@@ -5,7 +5,7 @@ chardet==3.0.4
 charset-normalizer==2.0.12
 idna>=3.7
 Jinja2==3.1.6
-MarkupSafe==1.1.1
+MarkupSafe>=2.0
 packaging==19.0
 pangu==4.0.6.1
 pyparsing==2.4.0
